@@ -1,10 +1,14 @@
 package statsd
 
+import "github.com/statsd/client-interface"
+
 import (
 	"bytes"
 	"testing"
 	"time"
 )
+
+var client statsd.Client = &Client{}
 
 func assert(t *testing.T, value, control string) {
 	if value != control {
