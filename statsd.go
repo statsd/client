@@ -154,6 +154,7 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
+// send stat.
 func (c *Client) send(stat string, rate float64, format string, args ...interface{}) error {
 	if c.prefix != "" {
 		stat = c.prefix + stat
