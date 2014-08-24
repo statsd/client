@@ -72,6 +72,17 @@ func TestGauge(t *testing.T) {
 	assert(t, buf.String(), "gauge:300|g")
 }
 
+func TestAnnotate(t *testing.T) {
+	buf := new(bytes.Buffer)
+	c := NewClient(buf)
+	err := c.Annotate("deploys", "deploying api 1.2.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Flush()
+	assert(t, buf.String(), "deploys:deploying api 1.2.3|a")
+}
+
 var millisecondTests = []struct {
 	duration time.Duration
 	control  int
