@@ -15,7 +15,8 @@ var debug = Debug("statsd")
 
 const defaultBufSize = 512
 
-// Client is statsd client representing a connection to a statsd server.
+// Client is statsd client representing a
+// onnection to a statsd server.
 type Client struct {
 	conn   net.Conn
 	buf    *bufio.Writer
@@ -27,7 +28,9 @@ func millisecond(d time.Duration) int {
 	return int(d.Seconds() * 1000)
 }
 
-// Dial connects to the given address on the given network using net.Dial and then returns a new Client for the connection.
+// Dial connects to the given address on the
+// given network using net.Dial and then returns
+// a new Client for the connection.
 func Dial(addr string) (*Client, error) {
 	conn, err := net.Dial("udp", addr)
 	if err != nil {
@@ -36,14 +39,16 @@ func Dial(addr string) (*Client, error) {
 	return newClient(conn, 0), nil
 }
 
-// NewClient returns a new client with the given writer, useful for testing.
+// NewClient returns a new client with the given writer,
+// useful for testing.
 func NewClient(w io.Writer) *Client {
 	return &Client{
 		buf: bufio.NewWriterSize(w, defaultBufSize),
 	}
 }
 
-// DialTimeout acts like Dial but takes a timeout. The timeout includes name resolution, if required.
+// DialTimeout acts like Dial but takes a timeout. The timeout
+// includes name resolution, if required.
 func DialTimeout(addr string, timeout time.Duration) (*Client, error) {
 	conn, err := net.DialTimeout("udp", addr, timeout)
 	if err != nil {
@@ -53,7 +58,8 @@ func DialTimeout(addr string, timeout time.Duration) (*Client, error) {
 }
 
 // DialSize acts like Dial but takes a packet size.
-// By default, the packet size is 512, see https://github.com/etsy/statsd/blob/master/docs/metric_types.md#multi-metric-packets for guidelines.
+// By default, the packet size is 512,
+// see https://github.com/etsy/statsd/blob/master/docs/metric_types.md#multi-metric-packets for guidelines.
 func DialSize(addr string, size int) (*Client, error) {
 	conn, err := net.Dial("udp", addr)
 	if err != nil {
@@ -62,6 +68,7 @@ func DialSize(addr string, size int) (*Client, error) {
 	return newClient(conn, size), nil
 }
 
+// new client helper.
 func newClient(conn net.Conn, size int) *Client {
 	if size <= 0 {
 		size = defaultBufSize
@@ -80,57 +87,57 @@ func (c *Client) Prefix(s string) {
 }
 
 // Increment increments the counter for the given bucket.
-func (c *Client) Increment(stat string, count int, rate float64) error {
-	return c.send(stat, rate, "%d|c", count)
+func (c *Client) Increment(name string, count int, rate float64) error {
+	return c.send(name, rate, "%d|c", count)
 }
 
 // Incr increments the counter for the given bucket by 1 at a rate of 1.
-func (c *Client) Incr(stat string) error {
-	return c.Increment(stat, 1, 1)
+func (c *Client) Incr(name string) error {
+	return c.Increment(name, 1, 1)
 }
 
 // IncrBy increments the counter for the given bucket by N at a rate of 1.
-func (c *Client) IncrBy(stat string, n int) error {
-	return c.Increment(stat, n, 1)
+func (c *Client) IncrBy(name string, n int) error {
+	return c.Increment(name, n, 1)
 }
 
 // Decrement decrements the counter for the given bucket.
-func (c *Client) Decrement(stat string, count int, rate float64) error {
-	return c.Increment(stat, -count, rate)
+func (c *Client) Decrement(name string, count int, rate float64) error {
+	return c.Increment(name, -count, rate)
 }
 
 // Decr decrements the counter for the given bucket by 1 at a rate of 1.
-func (c *Client) Decr(stat string) error {
-	return c.Increment(stat, -1, 1)
+func (c *Client) Decr(name string) error {
+	return c.Increment(name, -1, 1)
 }
 
 // DecrBy decrements the counter for the given bucket by N at a rate of 1.
-func (c *Client) DecrBy(stat string, value int) error {
-	return c.Increment(stat, -value, 1)
+func (c *Client) DecrBy(name string, value int) error {
+	return c.Increment(name, -value, 1)
 }
 
 // Duration records time spent for the given bucket with time.Duration.
-func (c *Client) Duration(stat string, duration time.Duration) error {
-	return c.send(stat, 1, "%d|ms", millisecond(duration))
+func (c *Client) Duration(name string, duration time.Duration) error {
+	return c.send(name, 1, "%d|ms", millisecond(duration))
 }
 
 // Histogram is an alias of .Duration() until the statsd protocol figures its shit out.
-func (c *Client) Histogram(stat string, value int) error {
-	return c.send(stat, 1, "%d|ms", value)
+func (c *Client) Histogram(name string, value int) error {
+	return c.send(name, 1, "%d|ms", value)
 }
 
 // Gauge records arbitrary values for the given bucket.
-func (c *Client) Gauge(stat string, value int) error {
-	return c.send(stat, 1, "%d|g", value)
+func (c *Client) Gauge(name string, value int) error {
+	return c.send(name, 1, "%d|g", value)
 }
 
-func (c *Client) Annotate(stat string, value string) error {
-	return c.send(stat, 1, "%s|a", value)
+func (c *Client) Annotate(name string, value string) error {
+	return c.send(name, 1, "%s|a", value)
 }
 
 // Unique records unique occurences of events.
-func (c *Client) Unique(stat string, value int, rate float64) error {
-	return c.send(stat, rate, "%d|s", value)
+func (c *Client) Unique(name string, value int, rate float64) error {
+	return c.send(name, rate, "%d|s", value)
 }
 
 // Flush flushes writes any buffered data to the network.
