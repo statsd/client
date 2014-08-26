@@ -131,6 +131,7 @@ func (c *Client) Gauge(name string, value int) error {
 	return c.send(name, 1, "%d|g", value)
 }
 
+// Annotate sends an annotation.
 func (c *Client) Annotate(name string, value string) error {
 	return c.send(name, 1, "%s|a", value)
 }
