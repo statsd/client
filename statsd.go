@@ -132,8 +132,8 @@ func (c *Client) Gauge(name string, value int) error {
 }
 
 // Annotate sends an annotation.
-func (c *Client) Annotate(name string, value string) error {
-	return c.send(name, 1, "%s|a", value)
+func (c *Client) Annotate(name string, value string, args ...interface{}) error {
+	return c.send(name, 1, "%s|a", fmt.Sprintf(value, args...))
 }
 
 // Unique records unique occurences of events.
