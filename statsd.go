@@ -2,7 +2,7 @@ package statsd
 
 import (
 	"fmt"
-	. "github.com/visionmedia/go-debug"
+	. "github.com/tj/go-debug"
 	"io"
 	"math/rand"
 	"net"
