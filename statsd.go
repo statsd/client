@@ -1,9 +1,8 @@
 package statsd
 
 import (
-	"bufio"
 	"fmt"
-	. "github.com/visionmedia/go-debug"
+	. "github.com/tj/go-debug"
 	"io"
 	"math/rand"
 	"net"
@@ -19,7 +18,7 @@ const defaultBufSize = 512
 // onnection to a statsd server.
 type Client struct {
 	conn   net.Conn
-	buf    *bufio.Writer
+	w      io.Writer
 	m      sync.Mutex
 	prefix string
 }
@@ -43,7 +42,7 @@ func Dial(addr string) (*Client, error) {
 // useful for testing.
 func NewClient(w io.Writer) *Client {
 	return &Client{
-		buf: bufio.NewWriterSize(w, defaultBufSize),
+		w: w,
 	}
 }
 
@@ -70,12 +69,9 @@ func DialSize(addr string, size int) (*Client, error) {
 
 // new client helper.
 func newClient(conn net.Conn, size int) *Client {
-	if size <= 0 {
-		size = defaultBufSize
-	}
 	return &Client{
 		conn: conn,
-		buf:  bufio.NewWriterSize(conn, size),
+		w:    conn,
 	}
 }
 
@@ -142,8 +138,9 @@ func (c *Client) Unique(name string, value int, rate float64) error {
 }
 
 // Flush flushes writes any buffered data to the network.
+// Just a no-op for now.
 func (c *Client) Flush() error {
-	return c.buf.Flush()
+	return nil
 }
 
 // Close closes the connection.
@@ -151,7 +148,6 @@ func (c *Client) Close() error {
 	if err := c.Flush(); err != nil {
 		return err
 	}
-	c.buf = nil
 	return c.conn.Close()
 }
 
@@ -172,21 +168,6 @@ func (c *Client) send(stat string, rate float64, format string, args ...interfac
 	format = fmt.Sprintf("%s:%s", stat, format)
 	debug(format, args...)
 
-	c.m.Lock()
-	defer c.m.Unlock()
-
-	// Flush data if we have reach the buffer limit
-	if c.buf.Available() < len(format) {
-		if err := c.Flush(); err != nil {
-			return nil
-		}
-	}
-
-	// Buffer is not empty, start filling it
-	if c.buf.Buffered() > 0 {
-		format = fmt.Sprintf("\n%s", format)
-	}
-
-	_, err := fmt.Fprintf(c.buf, format, args...)
+	_, err := fmt.Fprintf(c.w, format, args...)
 	return err
 }

@@ -109,33 +109,3 @@ func TestMilliseconds(t *testing.T) {
 		}
 	}
 }
-
-func TestMultiPacket(t *testing.T) {
-	buf := new(bytes.Buffer)
-	c := NewClient(buf)
-	err := c.Unique("unique", 765, 1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = c.Unique("unique", 765, 1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	c.Flush()
-	assert(t, buf.String(), "unique:765|s\nunique:765|s")
-}
-
-func TestMultiPacketOverflow(t *testing.T) {
-	buf := new(bytes.Buffer)
-	c := NewClient(buf)
-	for i := 0; i < 40; i++ {
-		err := c.Unique("unique", 765, 1)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	assert(t, buf.String(), "unique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s\nunique:765|s")
-	buf.Reset()
-	c.Flush()
-	assert(t, buf.String(), "unique:765|s")
-}
