@@ -28,15 +28,16 @@ func millisecond(d time.Duration) int {
 	return int(d.Seconds() * 1000)
 }
 
-// Dial connects to the given address on the
-// given network using net.Dial and then returns
-// a new Client for the connection.
+// Dial connects to the given address on the given network using net.Dial over
+// UDP and then returns a new Client for the connection.
 func Dial(addr string) (*Client, error) {
-	conn, err := net.Dial("udp", addr)
-	if err != nil {
-		return nil, err
-	}
-	return newClient(conn, 0), nil
+	return DialSize(addr, 0)
+}
+
+// DialTCP connects to the given address on the given network using net.Dial
+// over TCP and then returns a new Client for the connection.
+func DialTCP(addr string) (*Client, error) {
+	return DialTCPSize(addr, 0)
 }
 
 // NewClient returns a new client with the given writer,
@@ -47,7 +48,7 @@ func NewClient(w io.Writer) *Client {
 	}
 }
 
-// DialTimeout acts like Dial but takes a timeout. The timeout
+// DialTimeout acts like Dial but takes a timeout over UDP. The timeout
 // includes name resolution, if required.
 func DialTimeout(addr string, timeout time.Duration) (*Client, error) {
 	conn, err := net.DialTimeout("udp", addr, timeout)
@@ -57,11 +58,32 @@ func DialTimeout(addr string, timeout time.Duration) (*Client, error) {
 	return newClient(conn, 0), nil
 }
 
-// DialSize acts like Dial but takes a packet size.
+// DialTCPTimeout acts like Dial but takes a timeout over TCP. The timeout
+// includes name resolution, if required.
+func DialTCPTimeout(addr string, timeout time.Duration) (*Client, error) {
+	conn, err := net.DialTimeout("tcp", addr, timeout)
+	if err != nil {
+		return nil, err
+	}
+	return newClient(conn, 0), nil
+}
+
+// DialSize acts like Dial but takes a packet size over UDP.
 // By default, the packet size is 512,
 // see https://github.com/etsy/statsd/blob/master/docs/metric_types.md#multi-metric-packets for guidelines.
 func DialSize(addr string, size int) (*Client, error) {
 	conn, err := net.Dial("udp", addr)
+	if err != nil {
+		return nil, err
+	}
+	return newClient(conn, size), nil
+}
+
+// DialTCPSize acts like Dial but takes a packet size over TCP.
+// By default, the packet size is 512,
+// see https://github.com/etsy/statsd/blob/master/docs/metric_types.md#multi-metric-packets for guidelines.
+func DialTCPSize(addr string, size int) (*Client, error) {
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
