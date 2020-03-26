@@ -3,20 +3,20 @@ package statsd
 import (
 	"bufio"
 	"fmt"
-	. "github.com/visionmedia/go-debug"
 	"io"
 	"math/rand"
 	"net"
 	"sync"
 	"time"
+
+	. "github.com/visionmedia/go-debug"
 )
 
 var debug = Debug("statsd")
 
 const defaultBufSize = 512
 
-// Client is statsd client representing a
-// onnection to a statsd server.
+// Client is a statsd client representing a connection to a statsd server.
 type Client struct {
 	conn   net.Conn
 	buf    *bufio.Writer
@@ -158,7 +158,7 @@ func (c *Client) Annotate(name string, value string, args ...interface{}) error 
 	return c.send(name, 1, "%s|a", fmt.Sprintf(value, args...))
 }
 
-// Unique records unique occurences of events.
+// Unique records unique occurrences of events.
 func (c *Client) Unique(name string, value int, rate float64) error {
 	return c.send(name, rate, "%d|s", value)
 }
