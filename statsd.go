@@ -22,6 +22,7 @@ type Client struct {
 	buf    *bufio.Writer
 	m      sync.Mutex
 	prefix string
+	tags   string
 }
 
 func millisecond(d time.Duration) int {
@@ -108,6 +109,18 @@ func (c *Client) Prefix(s string) {
 	c.prefix = s
 }
 
+// AddTag adds a "key:value" tag to every stat string. See
+// https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-custom-metrics-statsd.html
+// for more information on tags.
+func (c *Client) AddTag(key, value string) {
+	c.m.Lock()
+	defer c.m.Unlock()
+	if len(c.tags) > 0 {
+		c.tags = c.tags + ","
+	}
+	c.tags = c.tags + key + ":" + value
+}
+
 // Increment increments the counter for the given bucket.
 func (c *Client) Increment(name string, count int, rate float64) error {
 	return c.send(name, rate, "%d|c", count)
@@ -186,6 +199,9 @@ func (c *Client) Close() error {
 
 // send stat.
 func (c *Client) send(stat string, rate float64, format string, args ...interface{}) error {
+	c.m.Lock()
+	defer c.m.Unlock()
+
 	if c.prefix != "" {
 		stat = c.prefix + stat
 	}
@@ -198,11 +214,11 @@ func (c *Client) send(stat string, rate float64, format string, args ...interfac
 		}
 	}
 
-	format = fmt.Sprintf("%s:%s", stat, format)
+	format = stat + ":" + format
+	if c.tags != "" {
+		format = format + "|#" + c.tags
+	}
 	debug(format, args...)
-
-	c.m.Lock()
-	defer c.m.Unlock()
 
 	// Flush data if we have reach the buffer limit
 	if c.buf.Available() < len(format) {
@@ -213,7 +229,7 @@ func (c *Client) send(stat string, rate float64, format string, args ...interfac
 
 	// Buffer is not empty, start filling it
 	if c.buf.Buffered() > 0 {
-		format = fmt.Sprintf("\n%s", format)
+		format = "\n" + format
 	}
 
 	_, err := fmt.Fprintf(c.buf, format, args...)
