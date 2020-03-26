@@ -163,8 +163,15 @@ func (c *Client) Unique(name string, value int, rate float64) error {
 	return c.send(name, rate, "%d|s", value)
 }
 
-// Flush flushes writes any buffered data to the network.
+// Flush flushes any buffered data to the network.
 func (c *Client) Flush() error {
+	c.m.Lock()
+	defer c.m.Unlock()
+	return c.flush()
+}
+
+// flush() flushes data to the network. The caller is expected to hold c.m.
+func (c *Client) flush() error {
 	return c.buf.Flush()
 }
 
@@ -199,7 +206,7 @@ func (c *Client) send(stat string, rate float64, format string, args ...interfac
 
 	// Flush data if we have reach the buffer limit
 	if c.buf.Available() < len(format) {
-		if err := c.Flush(); err != nil {
+		if err := c.flush(); err != nil {
 			return nil
 		}
 	}
