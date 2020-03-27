@@ -8,11 +8,7 @@ import (
 	"net"
 	"sync"
 	"time"
-
-	. "github.com/visionmedia/go-debug"
 )
-
-var debug = Debug("statsd")
 
 const defaultBufSize = 512
 
@@ -122,7 +118,7 @@ func (c *Client) AddTag(key, value string) {
 }
 
 // Increment increments the counter for the given bucket.
-func (c *Client) Increment(name string, count int, rate float64) error {
+func (c *Client) Increment(name string, count int64, rate float64) error {
 	return c.send(name, rate, "%d|c", count)
 }
 
@@ -132,12 +128,12 @@ func (c *Client) Incr(name string) error {
 }
 
 // IncrBy increments the counter for the given bucket by N at a rate of 1.
-func (c *Client) IncrBy(name string, n int) error {
+func (c *Client) IncrBy(name string, n int64) error {
 	return c.Increment(name, n, 1)
 }
 
 // Decrement decrements the counter for the given bucket.
-func (c *Client) Decrement(name string, count int, rate float64) error {
+func (c *Client) Decrement(name string, count int64, rate float64) error {
 	return c.Increment(name, -count, rate)
 }
 
@@ -147,7 +143,7 @@ func (c *Client) Decr(name string) error {
 }
 
 // DecrBy decrements the counter for the given bucket by N at a rate of 1.
-func (c *Client) DecrBy(name string, value int) error {
+func (c *Client) DecrBy(name string, value int64) error {
 	return c.Increment(name, -value, 1)
 }
 
@@ -157,12 +153,12 @@ func (c *Client) Duration(name string, duration time.Duration) error {
 }
 
 // Histogram is an alias of .Duration() until the statsd protocol figures its shit out.
-func (c *Client) Histogram(name string, value int) error {
+func (c *Client) Histogram(name string, value int64) error {
 	return c.send(name, 1, "%d|ms", value)
 }
 
 // Gauge records arbitrary values for the given bucket.
-func (c *Client) Gauge(name string, value int) error {
+func (c *Client) Gauge(name string, value int64) error {
 	return c.send(name, 1, "%d|g", value)
 }
 
@@ -172,7 +168,7 @@ func (c *Client) Annotate(name string, value string, args ...interface{}) error 
 }
 
 // Unique records unique occurrences of events.
-func (c *Client) Unique(name string, value int, rate float64) error {
+func (c *Client) Unique(name string, value int64, rate float64) error {
 	return c.send(name, rate, "%d|s", value)
 }
 
@@ -218,7 +214,6 @@ func (c *Client) send(stat string, rate float64, format string, args ...interfac
 	if c.tags != "" {
 		format = format + "|#" + c.tags
 	}
-	debug(format, args...)
 
 	// Flush data if we have reach the buffer limit
 	if c.buf.Available() < len(format) {

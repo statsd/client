@@ -1,14 +1,14 @@
-package statsd
-
-import "github.com/statsd/client-interface"
+package statsd_test
 
 import (
 	"bytes"
 	"testing"
 	"time"
+
+	"github.com/meterup/statsd-client"
 )
 
-var client statsd.Client = &Client{}
+// var client statsd.Client = &statsd.Client{}
 
 func assert(t *testing.T, value, control string) {
 	if value != control {
@@ -18,7 +18,7 @@ func assert(t *testing.T, value, control string) {
 
 func TestPrefix(t *testing.T) {
 	buf := new(bytes.Buffer)
-	c := NewClient(buf)
+	c := statsd.NewClient(buf)
 	c.Prefix("foo.bar.baz.")
 	err := c.Increment("incr", 1, 1)
 	if err != nil {
@@ -30,7 +30,7 @@ func TestPrefix(t *testing.T) {
 
 func TestIncr(t *testing.T) {
 	buf := new(bytes.Buffer)
-	c := NewClient(buf)
+	c := statsd.NewClient(buf)
 	err := c.Incr("incr")
 	if err != nil {
 		t.Fatal(err)
@@ -41,7 +41,7 @@ func TestIncr(t *testing.T) {
 
 func TestDecr(t *testing.T) {
 	buf := new(bytes.Buffer)
-	c := NewClient(buf)
+	c := statsd.NewClient(buf)
 	err := c.Decr("decr")
 	if err != nil {
 		t.Fatal(err)
@@ -52,7 +52,7 @@ func TestDecr(t *testing.T) {
 
 func TestDuration(t *testing.T) {
 	buf := new(bytes.Buffer)
-	c := NewClient(buf)
+	c := statsd.NewClient(buf)
 	err := c.Duration("timing", time.Duration(123456789))
 	if err != nil {
 		t.Fatal(err)
@@ -63,7 +63,7 @@ func TestDuration(t *testing.T) {
 
 func TestGauge(t *testing.T) {
 	buf := new(bytes.Buffer)
-	c := NewClient(buf)
+	c := statsd.NewClient(buf)
 	err := c.Gauge("gauge", 300)
 	if err != nil {
 		t.Fatal(err)
@@ -74,7 +74,7 @@ func TestGauge(t *testing.T) {
 
 func TestAnnotate(t *testing.T) {
 	buf := new(bytes.Buffer)
-	c := NewClient(buf)
+	c := statsd.NewClient(buf)
 	err := c.Annotate("deploys", "deploying api 1.2.3")
 	if err != nil {
 		t.Fatal(err)
@@ -83,36 +83,9 @@ func TestAnnotate(t *testing.T) {
 	assert(t, buf.String(), "deploys:deploying api 1.2.3|a")
 }
 
-var millisecondTests = []struct {
-	duration time.Duration
-	control  int
-}{
-	{
-		duration: 350 * time.Millisecond,
-		control:  350,
-	},
-	{
-		duration: 5 * time.Second,
-		control:  5000,
-	},
-	{
-		duration: 50 * time.Nanosecond,
-		control:  0,
-	},
-}
-
-func TestMilliseconds(t *testing.T) {
-	for i, mt := range millisecondTests {
-		value := millisecond(mt.duration)
-		if value != mt.control {
-			t.Errorf("%d: incorrect value, want %d, got %d", i, mt.control, value)
-		}
-	}
-}
-
 func TestMultiPacket(t *testing.T) {
 	buf := new(bytes.Buffer)
-	c := NewClient(buf)
+	c := statsd.NewClient(buf)
 	err := c.Unique("unique", 765, 1)
 	if err != nil {
 		t.Fatal(err)
@@ -127,7 +100,7 @@ func TestMultiPacket(t *testing.T) {
 
 func TestMultiPacketOverflow(t *testing.T) {
 	buf := new(bytes.Buffer)
-	c := NewClient(buf)
+	c := statsd.NewClient(buf)
 	for i := 0; i < 40; i++ {
 		err := c.Unique("unique", 765, 1)
 		if err != nil {
