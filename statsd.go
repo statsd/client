@@ -186,7 +186,9 @@ func (c *Client) flush() error {
 
 // Close closes the connection.
 func (c *Client) Close() error {
-	if err := c.Flush(); err != nil {
+	c.m.Lock()
+	defer c.m.Unlock()
+	if err := c.flush(); err != nil {
 		return err
 	}
 	c.buf = nil
