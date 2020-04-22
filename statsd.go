@@ -119,7 +119,7 @@ func (c *Client) AddTag(key, value string) {
 
 // Increment increments the counter for the given bucket.
 func (c *Client) Increment(name string, count int64, rate float64) error {
-	return c.send(name, rate, "%d|c", count)
+	return c.send(name, nil, rate, "%d|c", count)
 }
 
 // Incr increments the counter for the given bucket by 1 at a rate of 1.
@@ -149,27 +149,27 @@ func (c *Client) DecrBy(name string, value int64) error {
 
 // Duration records time spent for the given bucket with time.Duration.
 func (c *Client) Duration(name string, duration time.Duration) error {
-	return c.send(name, 1, "%d|ms", millisecond(duration))
+	return c.send(name, nil, 1, "%d|ms", millisecond(duration))
 }
 
 // Histogram is an alias of .Duration() until the statsd protocol figures its shit out.
 func (c *Client) Histogram(name string, value int64) error {
-	return c.send(name, 1, "%d|ms", value)
+	return c.send(name, nil, 1, "%d|ms", value)
 }
 
 // Gauge records arbitrary values for the given bucket.
-func (c *Client) Gauge(name string, value int64) error {
-	return c.send(name, 1, "%d|g", value)
+func (c *Client) Gauge(name string, value int64, tags ...[2]string) error {
+	return c.send(name, tags, 1, "%d|g", value)
 }
 
 // Annotate sends an annotation.
 func (c *Client) Annotate(name string, value string, args ...interface{}) error {
-	return c.send(name, 1, "%s|a", fmt.Sprintf(value, args...))
+	return c.send(name, nil, 1, "%s|a", fmt.Sprintf(value, args...))
 }
 
 // Unique records unique occurrences of events.
 func (c *Client) Unique(name string, value int64, rate float64) error {
-	return c.send(name, rate, "%d|s", value)
+	return c.send(name, nil, rate, "%d|s", value)
 }
 
 // Flush flushes any buffered data to the network.
@@ -196,7 +196,7 @@ func (c *Client) Close() error {
 }
 
 // send stat.
-func (c *Client) send(stat string, rate float64, format string, args ...interface{}) error {
+func (c *Client) send(stat string, statTags [][2]string, rate float64, format string, args ...interface{}) error {
 	c.m.Lock()
 	defer c.m.Unlock()
 
@@ -213,9 +213,25 @@ func (c *Client) send(stat string, rate float64, format string, args ...interfac
 	}
 
 	format = stat + ":" + format
+	tagString := ""
 	if c.tags != "" {
-		format = format + "|#" + c.tags
+		tagString += "|#" + c.tags
 	}
+	// per-stat tags
+	if len(statTags) > 0 {
+		if tagString == "" {
+			tagString += "|#"
+		} else {
+			tagString += ","
+		}
+		for i := range statTags {
+			tagString += statTags[i][0] + ":" + statTags[i][1]
+			if i < len(statTags)-1 {
+				tagString += ","
+			}
+		}
+	}
+	format = format + tagString
 
 	// Flush data if we have reach the buffer limit
 	if c.buf.Available() < len(format) {

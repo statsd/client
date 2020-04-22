@@ -72,6 +72,30 @@ func TestGauge(t *testing.T) {
 	assert(t, buf.String(), "gauge:300|g")
 }
 
+func TestGaugeTags(t *testing.T) {
+	buf := new(bytes.Buffer)
+	c := statsd.NewClient(buf)
+	t.Run("NoTagsOnClient", func(t *testing.T) {
+		err := c.Gauge("gauge", 300, [][2]string{{"five", "six"}, {"seven", "eight"}}...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Flush()
+		assert(t, buf.String(), "gauge:300|g|#five:six,seven:eight")
+		buf.Reset()
+	})
+	t.Run("TagsOnClient", func(t *testing.T) {
+		c.AddTag("one", "two")
+		c.AddTag("three", "four")
+		err := c.Gauge("gauge", 300, [][2]string{{"five", "six"}, {"seven", "eight"}}...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		c.Flush()
+		assert(t, buf.String(), "gauge:300|g|#one:two,three:four,five:six,seven:eight")
+	})
+}
+
 func TestAnnotate(t *testing.T) {
 	buf := new(bytes.Buffer)
 	c := statsd.NewClient(buf)
