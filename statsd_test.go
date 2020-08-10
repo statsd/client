@@ -1,11 +1,11 @@
-package statsd_test
+package statsd
 
 import (
 	"bytes"
 	"testing"
 	"time"
 
-	"github.com/meterup/statsd-client"
+	statsd "github.com/statsd/client"
 )
 
 // var client statsd.Client = &statsd.Client{}
