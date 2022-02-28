@@ -118,33 +118,33 @@ func (c *Client) AddTag(key, value string) {
 }
 
 // Increment increments the counter for the given bucket.
-func (c *Client) Increment(name string, count int64, rate float64) error {
-	return c.send(name, nil, rate, "%d|c", count)
+func (c *Client) Increment(name string, count int64, rate float64, tags ...[2]string) error {
+	return c.send(name, tags, rate, "%d|c", count)
 }
 
 // Incr increments the counter for the given bucket by 1 at a rate of 1.
-func (c *Client) Incr(name string) error {
-	return c.Increment(name, 1, 1)
+func (c *Client) Incr(name string, tags ...[2]string) error {
+	return c.Increment(name, 1, 1, tags...)
 }
 
 // IncrBy increments the counter for the given bucket by N at a rate of 1.
-func (c *Client) IncrBy(name string, n int64) error {
-	return c.Increment(name, n, 1)
+func (c *Client) IncrBy(name string, n int64, tags ...[2]string) error {
+	return c.Increment(name, n, 1, tags...)
 }
 
 // Decrement decrements the counter for the given bucket.
-func (c *Client) Decrement(name string, count int64, rate float64) error {
-	return c.Increment(name, -count, rate)
+func (c *Client) Decrement(name string, count int64, rate float64, tags ...[2]string) error {
+	return c.Increment(name, -count, rate, tags...)
 }
 
 // Decr decrements the counter for the given bucket by 1 at a rate of 1.
-func (c *Client) Decr(name string) error {
-	return c.Increment(name, -1, 1)
+func (c *Client) Decr(name string, tags ...[2]string) error {
+	return c.Increment(name, -1, 1, tags...)
 }
 
 // DecrBy decrements the counter for the given bucket by N at a rate of 1.
-func (c *Client) DecrBy(name string, value int64) error {
-	return c.Increment(name, -value, 1)
+func (c *Client) DecrBy(name string, value int64, tags ...[2]string) error {
+	return c.Increment(name, -value, 1, tags...)
 }
 
 // Duration records time spent for the given bucket with time.Duration.
